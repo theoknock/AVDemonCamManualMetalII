@@ -38,7 +38,7 @@ static VideoCamera * video;
     if (self = [super init])
     {
         NSLog(@"%s", __PRETTY_FUNCTION__);
-        video_data_output_sample_buffer_delegate_queue = dispatch_queue_create_with_target("sample buffer queue", DISPATCH_QUEUE_CONCURRENT, dispatch_get_main_queue());
+        video_data_output_sample_buffer_delegate_queue = dispatch_queue_create("sbcq", DISPATCH_QUEUE_SERIAL); //dispatch_queue_create_with_target("sample buffer queue", DISPATCH_QUEUE_CONCURRENT, dispatch_get_main_queue());
         if (!captureSession) {
             @try {
                 captureSession = [[AVCaptureSession alloc] init];

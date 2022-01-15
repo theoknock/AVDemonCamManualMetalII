@@ -20,6 +20,7 @@ static const NSUInteger MaxBuffersInFlight = 3;
 /* */
 static simd_float2 touch_point;
 id<MTLTexture>(^create_texture)(CVPixelBufferRef);
+void(^draw_texture)(id<MTLTexture>);
 id<MTLTexture>texture;
 
 @implementation Renderer
@@ -166,11 +167,124 @@ id<MTLTexture>texture;
         };
     }();
     
+    draw_texture = ^ (id<MTLTexture> tex) {
+        /// Per frame updates here
+        
+    //    dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
+                id<CAMetalDrawable> layerDrawable = [(CAMetalLayer *)(view.layer) nextDrawable];
+
+        _uniformBufferIndex = (_uniformBufferIndex + 1) % MaxBuffersInFlight;
+        
+        id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+        commandBuffer.label = @"MyCommand";
+        
+    //    __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
+        [commandBuffer addCompletedHandler:^ (id<MTLBuffer> buffer) {
+            return ^ (id<MTLCommandBuffer> _Nonnull commands) {
+                
+    //            dispatch_semaphore_signal(block_sema);
+                
+                set_radius((CGFloat)(*self->captureDevicePropertyControlLayoutBufferPtr).arc_center_xy__radius_z.z);
+                
+                //            printf("\ntouch_point\t\t\t\t{%.1f, %.1f}\n",
+                //                   (*self->captureDevicePropertyControlLayoutBufferPtr).touch_point_xy__angle_z.x,
+                //                   (*self->captureDevicePropertyControlLayoutBufferPtr).touch_point_xy__angle_z.y);
+                //            for (int i = 0; i < 2; i++) {
+                //                printf("control_points %d\t\t{%.1f, %.1f}\n",
+                //                       i,
+                //                       (*self->captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xyz[i].x,
+                //                       (*self->captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xyz[i].y);
+                //            }
+                //            for (int i = 0; i < 5; i++) {
+                //                printf("button_center  %d\t\t{%.1f, %.1f}\n",
+                //                       i,
+                //                       (*self->captureDevicePropertyControlLayoutBufferPtr).button_center_xy__angle_z[i].x,
+                //                       (*self->captureDevicePropertyControlLayoutBufferPtr).button_center_xy__angle_z[i].y);
+                //            }
+                //            printf("radius\t\t\t\t\t{%.1f}\n",
+                //                   (*self->captureDevicePropertyControlLayoutBufferPtr).arc_center_xy__radius_z.z);
+            };
+        }(captureDevicePropertyControlLayoutBuffer)];
+        
+    //    [self _updateGameState];
+        
+        /// Delay getting the currentRenderPassDescriptor until absolutely needed. This avoids
+        ///   holding onto the drawable and blocking the display pipeline any longer than necessary
+        MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
+        
+        if(renderPassDescriptor != nil)
+        {
+            /// Final pass rendering code here
+            
+            id <MTLRenderCommandEncoder> renderEncoder =
+            [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+            renderEncoder.label = @"MyRenderEncoder";
+            
+            [renderEncoder pushDebugGroup:@"DrawBox"];
+            
+            [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+            [renderEncoder setCullMode:MTLCullModeBack];
+            [renderEncoder setRenderPipelineState:_pipelineState];
+            [renderEncoder setDepthStencilState:_depthState];
+            
+            [renderEncoder setVertexBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
+                                    offset:0
+                                   atIndex:BufferIndexUniforms];
+            
+            [renderEncoder setFragmentBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
+                                      offset:0
+                                     atIndex:BufferIndexUniforms];
+            
+            for (NSUInteger bufferIndex = 0; bufferIndex < _mesh.vertexBuffers.count; bufferIndex++)
+            {
+                MTKMeshBuffer *vertexBuffer = _mesh.vertexBuffers[bufferIndex];
+                if((NSNull*)vertexBuffer != [NSNull null])
+                {
+                    [renderEncoder setVertexBuffer:vertexBuffer.buffer
+                                            offset:vertexBuffer.offset
+                                           atIndex:bufferIndex];
+                }
+            }
+            
+            [renderEncoder setFragmentTexture:tex
+                                      atIndex:TextureIndexColor];
+            
+            for(MTKSubmesh *submesh in _mesh.submeshes)
+            {
+                [renderEncoder drawIndexedPrimitives:submesh.primitiveType
+                                          indexCount:submesh.indexCount
+                                           indexType:submesh.indexType
+                                         indexBuffer:submesh.indexBuffer.buffer
+                                   indexBufferOffset:submesh.indexBuffer.offset];
+            }
+            
+            [renderEncoder popDebugGroup];
+            
+            [renderEncoder endEncoding];
+            
+            [commandBuffer presentDrawable:layerDrawable];// view.currentDrawable];
+        }
+        
+        {
+            id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+            assert(computeEncoder != nil);
+            [computeEncoder setComputePipelineState:_mComputeFunctionPSO];
+            [computeEncoder setBuffer:captureDevicePropertyControlLayoutBuffer offset:0 atIndex:0];
+            MTLSize threadsPerThreadgroup = MTLSizeMake(MIN(sizeof(CaptureDevicePropertyControlLayout), (_mComputeFunctionPSO.maxTotalThreadsPerThreadgroup / _mComputeFunctionPSO.threadExecutionWidth)), 1, 1);
+            MTLSize threadsPerGrid = MTLSizeMake(sizeof(CaptureDevicePropertyControlLayout), 1, 1);
+            [computeEncoder dispatchThreads: threadsPerGrid
+                      threadsPerThreadgroup: threadsPerThreadgroup];
+            [computeEncoder endEncoding];
+        }
+        
+        [commandBuffer commit];
+    };
+    
     [VideoCamera setAVCaptureVideoDataOutputSampleBufferDelegate:self];
     
     animation = ^{
 //        printf("1\t\t%s\n", __PRETTY_FUNCTION__);
-        float frameInterval = .005;
+        float frameInterval = .05;
         void (^eventHandlerBlock)(void) = ^{
 //            printf("3\t\t%s\n", __PRETTY_FUNCTION__);
             Uniforms * uniforms = (Uniforms*)_dynamicUniformBuffer[_uniformBufferIndex].contents;
@@ -186,6 +300,8 @@ id<MTLTexture>texture;
             _rotation += frameInterval;
             
             /* */
+//            [self drawInMTKView:view];
+            
             captureDevicePropertyControlLayoutBufferPtr[0].touch_point_xy__angle_z = simd_make_float3(simd_make_float2((float)(touch_point.x), (float)(touch_point.y)), (float)(0.0));
             
             //                [display_link invalidate];
@@ -201,11 +317,11 @@ id<MTLTexture>texture;
             [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         };
     };
-    
-    animation()();
     /* */
     
     _commandQueue = [_device newCommandQueue];
+    
+    animation()();
 }
 
 - (void)_loadAssets
@@ -284,118 +400,119 @@ id<MTLTexture>texture;
 //    captureDevicePropertyControlLayoutBufferPtr[0].touch_point_xy__angle_z = simd_make_float3(simd_make_float2((float)(touch_point.x), (float)(touch_point.y)), (float)(0.0));
 //}
 
-- (void)drawInMTKView:(nonnull MTKView *)view
-{
-    /// Per frame updates here
-    
-    dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
-    
-    _uniformBufferIndex = (_uniformBufferIndex + 1) % MaxBuffersInFlight;
-    
-    id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    commandBuffer.label = @"MyCommand";
-    
-    __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
-    [commandBuffer addCompletedHandler:^ (id<MTLBuffer> buffer) {
-        return ^ (id<MTLCommandBuffer> _Nonnull commands) {
-            
-            dispatch_semaphore_signal(block_sema);
-            
-            set_radius((CGFloat)(*self->captureDevicePropertyControlLayoutBufferPtr).arc_center_xy__radius_z.z);
-            
-            //            printf("\ntouch_point\t\t\t\t{%.1f, %.1f}\n",
-            //                   (*self->captureDevicePropertyControlLayoutBufferPtr).touch_point_xy__angle_z.x,
-            //                   (*self->captureDevicePropertyControlLayoutBufferPtr).touch_point_xy__angle_z.y);
-            //            for (int i = 0; i < 2; i++) {
-            //                printf("control_points %d\t\t{%.1f, %.1f}\n",
-            //                       i,
-            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xyz[i].x,
-            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xyz[i].y);
-            //            }
-            //            for (int i = 0; i < 5; i++) {
-            //                printf("button_center  %d\t\t{%.1f, %.1f}\n",
-            //                       i,
-            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).button_center_xy__angle_z[i].x,
-            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).button_center_xy__angle_z[i].y);
-            //            }
-            //            printf("radius\t\t\t\t\t{%.1f}\n",
-            //                   (*self->captureDevicePropertyControlLayoutBufferPtr).arc_center_xy__radius_z.z);
-        };
-    }(captureDevicePropertyControlLayoutBuffer)];
-    
-//    [self _updateGameState];
-    
-    /// Delay getting the currentRenderPassDescriptor until absolutely needed. This avoids
-    ///   holding onto the drawable and blocking the display pipeline any longer than necessary
-    MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
-    
-    if(renderPassDescriptor != nil)
-    {
-        /// Final pass rendering code here
-        
-        id <MTLRenderCommandEncoder> renderEncoder =
-        [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        renderEncoder.label = @"MyRenderEncoder";
-        
-        [renderEncoder pushDebugGroup:@"DrawBox"];
-        
-        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
-        [renderEncoder setCullMode:MTLCullModeBack];
-        [renderEncoder setRenderPipelineState:_pipelineState];
-        [renderEncoder setDepthStencilState:_depthState];
-        
-        [renderEncoder setVertexBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
-                                offset:0
-                               atIndex:BufferIndexUniforms];
-        
-        [renderEncoder setFragmentBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
-                                  offset:0
-                                 atIndex:BufferIndexUniforms];
-        
-        for (NSUInteger bufferIndex = 0; bufferIndex < _mesh.vertexBuffers.count; bufferIndex++)
-        {
-            MTKMeshBuffer *vertexBuffer = _mesh.vertexBuffers[bufferIndex];
-            if((NSNull*)vertexBuffer != [NSNull null])
-            {
-                [renderEncoder setVertexBuffer:vertexBuffer.buffer
-                                        offset:vertexBuffer.offset
-                                       atIndex:bufferIndex];
-            }
-        }
-        
-        [renderEncoder setFragmentTexture:texture
-                                  atIndex:TextureIndexColor];
-        
-        for(MTKSubmesh *submesh in _mesh.submeshes)
-        {
-            [renderEncoder drawIndexedPrimitives:submesh.primitiveType
-                                      indexCount:submesh.indexCount
-                                       indexType:submesh.indexType
-                                     indexBuffer:submesh.indexBuffer.buffer
-                               indexBufferOffset:submesh.indexBuffer.offset];
-        }
-        
-        [renderEncoder popDebugGroup];
-        
-        [renderEncoder endEncoding];
-        
-        [commandBuffer presentDrawable:view.currentDrawable];
-    }
-    
-    {
-        id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
-        assert(computeEncoder != nil);
-        [computeEncoder setComputePipelineState:_mComputeFunctionPSO];
-        [computeEncoder setBuffer:captureDevicePropertyControlLayoutBuffer offset:0 atIndex:0];
-        MTLSize threadsPerThreadgroup = MTLSizeMake(MIN(sizeof(CaptureDevicePropertyControlLayout), (_mComputeFunctionPSO.maxTotalThreadsPerThreadgroup / _mComputeFunctionPSO.threadExecutionWidth)), 1, 1);
-        MTLSize threadsPerGrid = MTLSizeMake(sizeof(CaptureDevicePropertyControlLayout), 1, 1);
-        [computeEncoder dispatchThreads: threadsPerGrid
-                  threadsPerThreadgroup: threadsPerThreadgroup];
-        [computeEncoder endEncoding];
-    }
-    
-    [commandBuffer commit];
-}
+//- (void)drawInMTKView:(nonnull MTKView *)view
+//{
+//    /// Per frame updates here
+//
+////    dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
+//            id<CAMetalDrawable> layerDrawable = [(CAMetalLayer *)(view.layer) nextDrawable];
+//
+//    _uniformBufferIndex = (_uniformBufferIndex + 1) % MaxBuffersInFlight;
+//
+//    id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+//    commandBuffer.label = @"MyCommand";
+//
+////    __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
+//    [commandBuffer addCompletedHandler:^ (id<MTLBuffer> buffer) {
+//        return ^ (id<MTLCommandBuffer> _Nonnull commands) {
+//
+////            dispatch_semaphore_signal(block_sema);
+//
+//            set_radius((CGFloat)(*self->captureDevicePropertyControlLayoutBufferPtr).arc_center_xy__radius_z.z);
+//
+//            //            printf("\ntouch_point\t\t\t\t{%.1f, %.1f}\n",
+//            //                   (*self->captureDevicePropertyControlLayoutBufferPtr).touch_point_xy__angle_z.x,
+//            //                   (*self->captureDevicePropertyControlLayoutBufferPtr).touch_point_xy__angle_z.y);
+//            //            for (int i = 0; i < 2; i++) {
+//            //                printf("control_points %d\t\t{%.1f, %.1f}\n",
+//            //                       i,
+//            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xyz[i].x,
+//            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xyz[i].y);
+//            //            }
+//            //            for (int i = 0; i < 5; i++) {
+//            //                printf("button_center  %d\t\t{%.1f, %.1f}\n",
+//            //                       i,
+//            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).button_center_xy__angle_z[i].x,
+//            //                       (*self->captureDevicePropertyControlLayoutBufferPtr).button_center_xy__angle_z[i].y);
+//            //            }
+//            //            printf("radius\t\t\t\t\t{%.1f}\n",
+//            //                   (*self->captureDevicePropertyControlLayoutBufferPtr).arc_center_xy__radius_z.z);
+//        };
+//    }(captureDevicePropertyControlLayoutBuffer)];
+//
+////    [self _updateGameState];
+//
+//    /// Delay getting the currentRenderPassDescriptor until absolutely needed. This avoids
+//    ///   holding onto the drawable and blocking the display pipeline any longer than necessary
+//    MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
+//
+//    if(renderPassDescriptor != nil)
+//    {
+//        /// Final pass rendering code here
+//
+//        id <MTLRenderCommandEncoder> renderEncoder =
+//        [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+//        renderEncoder.label = @"MyRenderEncoder";
+//
+//        [renderEncoder pushDebugGroup:@"DrawBox"];
+//
+//        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+//        [renderEncoder setCullMode:MTLCullModeBack];
+//        [renderEncoder setRenderPipelineState:_pipelineState];
+//        [renderEncoder setDepthStencilState:_depthState];
+//
+//        [renderEncoder setVertexBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
+//                                offset:0
+//                               atIndex:BufferIndexUniforms];
+//
+//        [renderEncoder setFragmentBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
+//                                  offset:0
+//                                 atIndex:BufferIndexUniforms];
+//
+//        for (NSUInteger bufferIndex = 0; bufferIndex < _mesh.vertexBuffers.count; bufferIndex++)
+//        {
+//            MTKMeshBuffer *vertexBuffer = _mesh.vertexBuffers[bufferIndex];
+//            if((NSNull*)vertexBuffer != [NSNull null])
+//            {
+//                [renderEncoder setVertexBuffer:vertexBuffer.buffer
+//                                        offset:vertexBuffer.offset
+//                                       atIndex:bufferIndex];
+//            }
+//        }
+//
+//        [renderEncoder setFragmentTexture:texture
+//                                  atIndex:TextureIndexColor];
+//
+//        for(MTKSubmesh *submesh in _mesh.submeshes)
+//        {
+//            [renderEncoder drawIndexedPrimitives:submesh.primitiveType
+//                                      indexCount:submesh.indexCount
+//                                       indexType:submesh.indexType
+//                                     indexBuffer:submesh.indexBuffer.buffer
+//                               indexBufferOffset:submesh.indexBuffer.offset];
+//        }
+//
+//        [renderEncoder popDebugGroup];
+//
+//        [renderEncoder endEncoding];
+//
+//        [commandBuffer presentDrawable:layerDrawable];// view.currentDrawable];
+//    }
+//
+//    {
+//        id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+//        assert(computeEncoder != nil);
+//        [computeEncoder setComputePipelineState:_mComputeFunctionPSO];
+//        [computeEncoder setBuffer:captureDevicePropertyControlLayoutBuffer offset:0 atIndex:0];
+//        MTLSize threadsPerThreadgroup = MTLSizeMake(MIN(sizeof(CaptureDevicePropertyControlLayout), (_mComputeFunctionPSO.maxTotalThreadsPerThreadgroup / _mComputeFunctionPSO.threadExecutionWidth)), 1, 1);
+//        MTLSize threadsPerGrid = MTLSizeMake(sizeof(CaptureDevicePropertyControlLayout), 1, 1);
+//        [computeEncoder dispatchThreads: threadsPerGrid
+//                  threadsPerThreadgroup: threadsPerThreadgroup];
+//        [computeEncoder endEncoding];
+//    }
+//
+//    [commandBuffer commit];
+//}
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
@@ -491,7 +608,9 @@ void set_touch_point(CGPoint tp) {
 
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    texture = create_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
+//    dispatch_async(dispatch_get_main_queue(), ^{
+        draw_texture(create_texture(CMSampleBufferGetImageBuffer(sampleBuffer)));
+//    });
 }
 
 @end
