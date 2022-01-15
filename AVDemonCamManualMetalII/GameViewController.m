@@ -35,7 +35,9 @@
 
     [_renderer mtkView:_view drawableSizeWillChange:_view.bounds.size];
 
-    _view.delegate = _renderer;
+    _view.delegate = _renderer; // TO_DO: Replace delegate with direct draw call to layer
 }
+
+
 
 @end

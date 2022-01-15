@@ -15,6 +15,8 @@
 		B9CFB1F82790237A001B363F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9CFB1F72790237A001B363F /* Assets.xcassets */; };
 		B9CFB1FB2790237A001B363F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9CFB1F92790237A001B363F /* LaunchScreen.storyboard */; };
 		B9CFB1FD2790237A001B363F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B9CFB1FC2790237A001B363F /* main.m */; };
+		B9CFB20627906F5F001B363F /* ControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = B9CFB20527906F5F001B363F /* ControlView.m */; };
+		B9FB8D3527924C9E0088F353 /* VideoCamera.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D3427924C9E0088F353 /* VideoCamera.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,14 +25,19 @@
 		B9CFB1E927902378001B363F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		B9CFB1EB27902378001B363F /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		B9CFB1EC27902378001B363F /* Renderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Renderer.m; sourceTree = "<group>"; };
-		B9CFB1EE27902378001B363F /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
-		B9CFB1EF27902378001B363F /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; };
+		B9CFB1EE27902378001B363F /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; wrapsLines = 0; };
+		B9CFB1EF27902378001B363F /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B9CFB1F127902378001B363F /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		B9CFB1F327902378001B363F /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
 		B9CFB1F527902378001B363F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		B9CFB1F72790237A001B363F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B9CFB1FA2790237A001B363F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B9CFB1FC2790237A001B363F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		B9CFB20327902384001B363F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B9CFB20427906F5F001B363F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; wrapsLines = 0; };
+		B9CFB20527906F5F001B363F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; };
+		B9FB8D3327924C9E0088F353 /* VideoCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VideoCamera.h; sourceTree = "<group>"; };
+		B9FB8D3427924C9E0088F353 /* VideoCamera.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VideoCamera.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,18 +70,23 @@
 		B9CFB1E727902378001B363F /* AVDemonCamManualMetalII */ = {
 			isa = PBXGroup;
 			children = (
+				B9CFB1FC2790237A001B363F /* main.m */,
 				B9CFB1E827902378001B363F /* AppDelegate.h */,
 				B9CFB1E927902378001B363F /* AppDelegate.m */,
-				B9CFB1EB27902378001B363F /* Renderer.h */,
-				B9CFB1EC27902378001B363F /* Renderer.m */,
 				B9CFB1EE27902378001B363F /* GameViewController.h */,
 				B9CFB1EF27902378001B363F /* GameViewController.m */,
+				B9FB8D3327924C9E0088F353 /* VideoCamera.h */,
+				B9FB8D3427924C9E0088F353 /* VideoCamera.m */,
+				B9CFB20427906F5F001B363F /* ControlView.h */,
+				B9CFB20527906F5F001B363F /* ControlView.m */,
+				B9CFB1EB27902378001B363F /* Renderer.h */,
+				B9CFB1EC27902378001B363F /* Renderer.m */,
 				B9CFB1F127902378001B363F /* Shaders.metal */,
 				B9CFB1F327902378001B363F /* ShaderTypes.h */,
+				B9CFB20327902384001B363F /* Info.plist */,
 				B9CFB1F427902378001B363F /* Main.storyboard */,
-				B9CFB1F72790237A001B363F /* Assets.xcassets */,
 				B9CFB1F92790237A001B363F /* LaunchScreen.storyboard */,
-				B9CFB1FC2790237A001B363F /* main.m */,
+				B9CFB1F72790237A001B363F /* Assets.xcassets */,
 			);
 			path = AVDemonCamManualMetalII;
 			sourceTree = "<group>";
@@ -149,8 +161,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9FB8D3527924C9E0088F353 /* VideoCamera.m in Sources */,
 				B9CFB1FD2790237A001B363F /* main.m in Sources */,
 				B9CFB1F227902378001B363F /* Shaders.metal in Sources */,
+				B9CFB20627906F5F001B363F /* ControlView.m in Sources */,
 				B9CFB1ED27902378001B363F /* Renderer.m in Sources */,
 				B9CFB1F027902378001B363F /* GameViewController.m in Sources */,
 				B9CFB1EA27902378001B363F /* AppDelegate.m in Sources */,
@@ -300,11 +314,14 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9987K9442;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AVDemonCamManualMetalII/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -328,11 +345,14 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9987K9442;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AVDemonCamManualMetalII/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (

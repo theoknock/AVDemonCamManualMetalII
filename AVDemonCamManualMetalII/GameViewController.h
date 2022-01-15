@@ -9,8 +9,12 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import "Renderer.h"
+#import "ControlView.h"
+#import "VideoCamera.h"
 
 // Our iOS view controller
 @interface GameViewController : UIViewController
+
+@property (strong, nonatomic) IBOutlet ControlView *controlView;
 
 @end
